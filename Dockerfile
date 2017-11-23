@@ -1,16 +1,15 @@
-FROM microsoft/dotnet:latest AS build-box
+FROM microsoft/dotnet-nightly:2.1-sdk as builder
 
 WORKDIR /app
 COPY . .
 
-RUN dotnet publish -c release -r linux-x64 -o out
+RUN dotnet restore 
+RUN dotnet publish -c release -r alpine.3.6-x64 -o out
 
-FROM bitnami/minideb
-
-RUN apt-get update && apt-get install -y libunwind8 curl libicu57
+FROM microsoft/dotnet-nightly:2.1-runtime-deps-alpine
 
 WORKDIR /app
 
-COPY --from=build-box /app/out/ .
+COPY --from=builder /app/out/ .
 
 ENTRYPOINT [ "/app/small-docker-test" ]
